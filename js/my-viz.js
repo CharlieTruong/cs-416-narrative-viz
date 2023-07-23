@@ -21,7 +21,7 @@ const timeseriesPath = timeseriesSVG.append("path")
 
 const covidDeathsPath = covidDeathsSVG.append("path")
 
-const timeseriesAnnotations = timeseriesSVG
+const timeseriesAnnotations = covidDeathsSVG
   .append("g")
   .attr("class", "annotation-group")
 
@@ -139,34 +139,91 @@ var parseTime = d3.timeParse("%Y-%m-%d");
 const annotations = [
   {
     note: {
-      label: "Longer text to show text wrapping",
-      bgPadding: 20,
-      title: "Annotations :)"
+      label: "CDC reports first lab-confirmed covid-19 case",
+      title: "Jan 20, 2020"
     },
     connector: {
       end: "arrow"
     },
+    dx: 10,
     dy: -100,
-    // dx: -142,
-    // subject: { y:"bottom" },
-    data: { date: "2020-04-30", covid_cases: 1000 },
-    className: "show-bg"
+    data: { date: "2020-01-26", covid_cases: 0 },
   },
   {
     note: {
-      label: "Some other thing",
-      bgPadding: 20,
-      title: "Annotations :)"
+      label: "Vaccinations begin for healthcare workers and elderly in long-term care facilities",
+      title: "Dec 14, 2020"
     },
     connector: {
       end: "arrow"
     },
-    dy: -150,
-    dx: -200,
+    dx: -20,
+    dy: -100,
+    data: { date: "2020-12-20", covid_cases: 0 },
+  },
+  {
+    note: {
+      label: "Teachers, school staff, and child care workers eligible for vaccines",
+      title: "Mar 2, 2021"
+    },
+    connector: {
+      end: "arrow"
+    },
+    dx: -150,
+    dy: -250,
+    data: { date: "2021-03-07", covid_cases: 0 },
+  },
+  {
+    note: {
+      label: "All people age 16 and older eligible for vaccines",
+      title: "Apr 19, 2021"
+    },
+    connector: {
+      end: "arrow"
+    },
+    dx: -1,
+    dy: -130,
+    data: { date: "2021-04-25", covid_cases: 0 },
+  },
+  {
+    note: {
+      label: "FDA authorizes vaccines for children ages 12 and older",
+      title: "May 10, 2021"
+    },
+    connector: {
+      end: "arrow"
+    },
+    dx: -25,
+    dy: -275,
+    // dx: ,
     // dx: -142,
     // subject: { y:"bottom" },
-    data: { date: "2021-05-12", covid_cases: 50000 },
-    className: "show-bg"
+    data: { date: "2021-05-16", covid_cases: 0 },
+    // className: "show-bg"
+  },
+  {
+    note: {
+      label: "FDA authorizes vaccines for children ages 5 and older",
+      title: "Oct 29, 2021"
+    },
+    connector: {
+      end: "arrow"
+    },
+    dx: -25,
+    dy: -150,
+    data: { date: "2021-10-31", covid_cases: 0 },
+  },
+  {
+    note: {
+      label: "FDA authorizes vaccines for children 6 months and older",
+      title: "Jun 17, 2022"
+    },
+    connector: {
+      end: "arrow"
+    },
+    dx: -50,
+    dy: -150,
+    data: { date: "2022-06-19", covid_cases: 0 },
   },
 ]
 
@@ -205,7 +262,7 @@ const setupTimeSeriesChartPromise = getDataPromise.then(function(data) {
 
   x.domain(d3.extent(covidDeathsData, function(d) { return d.date; }))
   y.domain([0, d3.max(covidCasesData, function(d) { return d.covid_cases; })])
-  y2.domain([0, d3.max(covidDeathsData, function(d) { return d.covid_deaths; })])
+  y2.domain([0, d3.max(covidDeathsData, function(d) { return d.covid_deaths; }) * 2])
 
   // Add the X Axis
   covidDeathsSVG
@@ -362,8 +419,8 @@ function changeSlide(maxDate) {
       .attr("d", deathsValueline);
 
     const makeAnnotations = d3.annotation()
-      .notePadding(15)
-      .type(d3.annotationCalloutCircle)
+      // .notePadding(15)
+      // .type(d3.annotationCalloutCircle)
       .accessors({
         x: d => x(parseTime(d.date)),
         y: d => y(d.covid_cases)
