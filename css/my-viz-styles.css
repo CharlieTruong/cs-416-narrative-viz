@@ -2,13 +2,44 @@
     list-style-type: none;
 }
 
-#slide-controller li {
+#slide-controller .scene-button {
     display: inline-block;
     padding: 5px;
 }
 
+#remove-state-filter {
+    display: none;
+    padding: 5px;
+}
+
+#slide-controller h4 {
+    display: inline-block;
+}
+
+#slide-controller ul {
+    display: inline-block;
+}
+
 #timeseries-chart-title {
-    width: 1200px;
     text-align: center;
     font-weight: bold;
+}
+
+#charts {
+    overflow: auto;
+    white-space:nowrap;
+}
+
+#timeseries {
+    display: inline-block;
+}
+
+#deaths-map-title {
+    width: 800px;
+    text-align: center;
+    font-weight: bold;
+}
+
+#deaths-map {
+    display: none;
 }

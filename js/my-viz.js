@@ -231,7 +231,7 @@ const slides = [
     },
     annotation: {
       note: {
-        label: "Covid cases and deaths remain stable",
+        label: "Covid cases and deaths have stabilized",
         title: "Mar 12, 2023"
       },
       connector: {
@@ -305,6 +305,7 @@ const setupTimeSeriesChartPromise = getDataPromise.then(function(data) {
 
   covidCasesSVG
     .append("g")
+    .attr("id", "cases-y-axis")
     .call(d3.axisLeft(y))
     .append("text")
     .attr("fill", "black")
@@ -314,6 +315,7 @@ const setupTimeSeriesChartPromise = getDataPromise.then(function(data) {
 
   covidDeathsSVG
     .append("g")
+    .attr("id", "deaths-y-axis")
     .call(d3.axisLeft(y2))
     .append("text")
     .attr("fill", "black")
@@ -323,6 +325,7 @@ const setupTimeSeriesChartPromise = getDataPromise.then(function(data) {
 
   covidVaxSVG
     .append("g")
+    .attr("id", "vax-y-axis")
     .call(d3.axisLeft(y3))
     .append("text")
     .attr("fill", "black")
@@ -348,19 +351,6 @@ let mapMargin = {
 let mapWidth = 800 - mapMargin.left - mapMargin.right;
 let mapHeight = 600 - mapMargin.top - mapMargin.bottom;
 
-// Creates sources <svg> element and inner g (for margins)
-const casesSVG = d3
-  .select("#cases-map")
-  .append("svg")
-  .attr("width", mapWidth + mapMargin.left + mapMargin.right)
-  .attr("height", mapHeight + mapMargin.top + mapMargin.bottom)
-  .append("g")
-  .attr("transform", `translate(${mapMargin.left}, ${mapMargin.top})`)
-
-const casesProjection = d3.geoAlbersUsa()
-const casesPath = d3.geoPath(casesProjection)
-const casesColor = d3.scaleSequential(d3.interpolateBlues)
-
 const deathsSVG = d3
   .select("#deaths-map")
   .append("svg")
@@ -370,7 +360,7 @@ const deathsSVG = d3
   .attr("transform", `translate(${mapMargin.left}, ${mapMargin.top})`)
 
 const deathsProjection = d3.geoAlbersUsa()
-const deathsPath = d3.geoPath(casesProjection)
+const deathsPath = d3.geoPath(deathsProjection)
 const deathsColor = d3.scaleSequential(d3.interpolateReds)
 
 const mapTooltip = d3.select("#map-tooltip")
@@ -379,35 +369,12 @@ const setupMapsPromise = getMapJSONPromise
   .then((us) => {
     const states = topojson.feature(us, us.objects.states).features;
     const nation = topojson.feature(us, us.objects.nation).features[0];
-
-    // scale to fit bounds
-    casesProjection.fitSize([mapWidth, mapHeight], nation)
     deathsProjection.fitSize([mapWidth, mapHeight], nation)
     const emptyGeoData = states.map((feature) => ({
       feature: feature,
       name: feature.properties.name,
       value: 0
     }));
-
-    casesSVG
-      .selectAll("path")
-      .data(emptyGeoData)
-      .enter()
-      .append("path")
-      .attr("d", (d) => casesPath(d.feature))
-      .style("fill", (d) => casesColor(d.value))
-      .on("mouseover", function(e, d) {
-        mapTooltip
-          .style("position", "absolute")
-          .style("opacity", 0.8)
-          .html(d.name + ": " + d3.format(",.2r")(stateCasesData.get(d.name)) + " total cases")
-          .style("left", (e.pageX) + "px")
-          .style("top", (e.pageY - 28) + "px");
-      })
-      .on("mouseleave", function(e, d) {
-        mapTooltip
-          .style("opacity", 0)
-      })
 
     deathsSVG
       .selectAll("path")
@@ -416,11 +383,16 @@ const setupMapsPromise = getMapJSONPromise
       .append("path")
       .attr("d", (d) => deathsPath(d.feature))
       .style("fill", (d) => deathsColor(d.value))
+      .style("stroke", "black")
       .on("mouseover", function(e, d) {
+        let text = d.name
+        if (stateDeathsData.get(d.name)) {
+          text = d.name + ": " + d3.format(",.2r")(stateDeathsData.get(d.name)) + " total deaths"
+        }
         mapTooltip
           .style("position", "absolute")
           .style("opacity", 0.8)
-          .html(d.name + ": " + d3.format(",.2r")(stateDeathsData.get(d.name)) + " total deaths")
+          .html(text)
           .style("left", (e.pageX) + "px")
           .style("top", (e.pageY - 28) + "px");
       })
@@ -428,20 +400,70 @@ const setupMapsPromise = getMapJSONPromise
         mapTooltip
           .style("opacity", 0)
       })
+      .on("click", function(e, d) {
+        changeSlide(3, d.name)
+      })
 
     return states
   })
 
-function changeSlide(slideNumber) {
+function changeSlide(slideNumber, state) {
+  d3.selectAll(".scene-button").style("opacity", "0.25")
+  d3.select(`.scene-button:nth-child(${slideNumber + 1})`).style("opacity", "1")
   Promise.all([setupTimeSeriesChartPromise, setupMapsPromise])
   .then((values) => {
     const data = values[0]
     const statesMap = values[1]
     currentMaxDate = slides[slideNumber].date
-    const filteredCasesData = data.covidCasesData.filter(function(x) {return x.date <= currentMaxDate})
-    const filteredDeathData = data.covidDeathsData.filter(function(x) {return x.date <= currentMaxDate})
-    const filteredVaxData = data.covidVaxData.filter(function(x) {return x.date <= currentMaxDate})
-    const filteredRawData = data.rawData.filter((x) => x.date <= currentMaxDate)
+    let filteredRawData = data.rawData
+    if (state) {
+      filteredRawData = filteredRawData.filter((x) => x.state == state)
+      d3.select("#timeseries-chart-title").text(`${state}: New Cases, New Deaths, and Cum. Vaccinations by Week`)
+      d3.select("#remove-state-filter").style("display", "inline-block")
+    } else {
+      d3.select("#timeseries-chart-title").text("New Cases, New Deaths, and Cum. Vaccinations by Week")
+      d3.select("#remove-state-filter").style("display", "none")
+    }
+
+    covidCasesData = d3.rollup(
+      filteredRawData,
+      function(v) { return d3.sum(v, function(d) { return d.covid_cases })},
+      function(d) { return d.date }
+    )
+
+    covidDeathsData = d3.rollup(
+      filteredRawData,
+      function(v) { return d3.sum(v, function(d) { return d.covid_deaths })},
+      function(d) { return d.date }
+    )
+
+    covidVaxData = d3.rollup(
+      filteredRawData,
+      function(v) { return d3.sum(v, function(d) { return d.cum_one_vax_dose })},
+      function(d) { return d.date }
+    )
+
+    covidCasesData = Array.from(covidCasesData, function(item) {
+      return {date: item[0], covid_cases: item[1]}
+    })
+    covidDeathsData = Array.from(covidDeathsData, function(item) {
+      return {date: item[0], covid_deaths: item[1]}
+    })
+    covidVaxData = Array.from(covidVaxData, function(item) {
+      return {date: item[0], cum_one_vax_dose: item[1]}
+    })
+
+    x.domain(d3.extent(covidDeathsData, function(d) { return d.date; }))
+    y.domain([0, d3.max(covidCasesData, function(d) { return d.covid_cases; })])
+    y2.domain([0, d3.max(covidDeathsData, function(d) { return d.covid_deaths; }) * 2])
+    y3.domain([0, d3.max(covidVaxData, function(d) { return d.cum_one_vax_dose; })])
+    d3.select("#cases-y-axis").call(d3.axisLeft(y))
+    d3.select("#deaths-y-axis").call(d3.axisLeft(y2))
+    d3.select("#vax-y-axis").call(d3.axisLeft(y3))
+    const filteredCasesData = covidCasesData.filter((x) => x.date <= currentMaxDate)
+    const filteredDeathData = covidDeathsData.filter((x) => x.date <= currentMaxDate)
+    const filteredVaxData = covidVaxData.filter((x) => x.date <= currentMaxDate)
+    filteredRawData = filteredRawData.filter((x) => x.date <= currentMaxDate)
 
     covidCasesPath
       .data([filteredCasesData])
@@ -462,7 +484,8 @@ function changeSlide(slideNumber) {
       .attr("d", vaxValueline);
 
     d3.selectAll(".annotation-group").remove()
-    slides[slideNumber].annotationContainer
+    if (!state) {
+      slides[slideNumber].annotationContainer
       .append("g")
       .attr("class", "annotation-group")
       .call(
@@ -472,38 +495,35 @@ function changeSlide(slideNumber) {
             slides[slideNumber].annotation
           ])
       )
+    }
 
-    stateCasesData = d3.rollup(
-      filteredRawData,
-      function(v) { return d3.sum(v, function(d) { return d.covid_cases })},
-      function(d) { return d.state }
-    )
-    const maxStateCovidCases = Math.max(...stateCasesData.values())
-    const geoCasesData = statesMap.map((feature) => ({
-      feature: feature,
-      name: feature.properties.name,
-      value: stateCasesData.get(feature.properties.name) / maxStateCovidCases
-    }))
-    casesSVG
-      .selectAll("path")
-      .data(geoCasesData)
-      .style("fill", (d) => casesColor(d.value))
+    if (slideNumber < (slides.length - 1)) {
+      d3.select("#deaths-map").style("display", "none")
+    } else {
+      d3.select("#deaths-map").style("display", "block")
+      stateDeathsData = d3.rollup(
+        filteredRawData,
+        function(v) { return d3.sum(v, function(d) { return d.covid_deaths })},
+        function(d) { return d.state }
+      )
+      const maxStateCovidDeaths = Math.max(...stateDeathsData.values())
+      const geoDeathsData = statesMap.map((feature) => {
+        let value = 0
+        if (!state || state == feature.properties.name) {
+          value = stateDeathsData.get(feature.properties.name) / maxStateCovidDeaths
+        }
 
-    stateDeathsData = d3.rollup(
-      filteredRawData,
-      function(v) { return d3.sum(v, function(d) { return d.covid_deaths })},
-      function(d) { return d.state }
-    )
-    const maxStateCovidDeaths = Math.max(...stateDeathsData.values())
-    const geoDeathsData = statesMap.map((feature) => ({
-      feature: feature,
-      name: feature.properties.name,
-      value: stateDeathsData.get(feature.properties.name) / maxStateCovidDeaths
-    }))
-    deathsSVG
-      .selectAll("path")
-      .data(geoDeathsData)
-      .style("fill", (d) => deathsColor(d.value))
+        return {
+          feature: feature,
+          name: feature.properties.name,
+          value: value
+        }
+      })
+      deathsSVG
+        .selectAll("path")
+        .data(geoDeathsData)
+        .style("fill", (d) => deathsColor(d.value))
+    }
   })
 }
 

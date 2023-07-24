@@ -7,24 +7,25 @@
     </head>
     <body>
         <h3>Vaccines Beat the Covid-19 Pandemic in the U.S.</h3>
+        <div>Data Source: <a href="https://coronavirus.jhu.edu/" target="_blank">John Hopkins</a></div>
         <div id="map-tooltip"></div>
-        <h4>Slides</h4>
         <div id="slide-controller">
+            <h4>Scenes</h4>
             <ul>
-                <li><a href="#" onclick="changeSlide(0)">1</a></li>
-                <li><a href="#" onclick="changeSlide(1)">2</a></li>
-                <li><a href="#" onclick="changeSlide(2)">3</a></li>
-                <li><a href="#" onclick="changeSlide(3)">4</a></li>
+                <li class="scene-button"><a href="#" onclick="changeSlide(0)">1</a></li>
+                <li class="scene-button"><a href="#" onclick="changeSlide(1)">2</a></li>
+                <li class="scene-button"><a href="#" onclick="changeSlide(2)">3</a></li>
+                <li class="scene-button"><a href="#" onclick="changeSlide(3)">4</a></li>
+                <li id="remove-state-filter"><a href="#" onclick="changeSlide(3)">Remove State Filter</a></li>
             </ul>
         </div>
-        <div id="timeseries">
-            <div id="timeseries-chart-title">New Cases and Deaths by Week</div>
-        </div>
-        <div id="cases-map">
-            <div>Total Cases by State</div>
-        </div>
-        <div id="deaths-map">
-            <div>Total Deaths by State</div>
+        <div id="charts">
+            <div id="timeseries">
+                <div id="timeseries-chart-title">New Cases, New Deaths, and Cum. Vaccinations by Week</div>
+            </div>
+            <div id="deaths-map">
+                <div id="deaths-map-title">Total Deaths by State</div>
+            </div>
         </div>
         <script src="d3/d3js.org_d3.v7.js" charset="utf-8"></script>
         <script src="d3/rawgit.com_susielu_d3-annotation_master_d3-annotation.min.js"></script>
