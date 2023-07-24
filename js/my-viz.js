@@ -1,6 +1,6 @@
 const timeSeriesMargin = {top: 20, right: 20, bottom: 70, left: 100}
-const timeSeriesWidth = 960 - timeSeriesMargin.left - timeSeriesMargin.right
-const timeSeriesHeight = 500 - timeSeriesMargin.top - timeSeriesMargin.bottom
+const timeSeriesWidth = 800 - timeSeriesMargin.left - timeSeriesMargin.right
+const timeSeriesHeight = 750 - timeSeriesMargin.top - timeSeriesMargin.bottom
 
 const timeseriesContainer = d3
   .select("#timeseries")
@@ -14,15 +14,25 @@ const covidCasesSVG = timeseriesContainer
 
 const covidDeathsSVG = timeseriesContainer
   .append("g")
-  .attr("transform", "translate(" + timeSeriesMargin.left + "," + (timeSeriesMargin.top + timeSeriesHeight / 2) + ")");
+  .attr("transform", "translate(" + timeSeriesMargin.left + "," + (timeSeriesMargin.top + timeSeriesHeight / 3) + ")");
+
+const covidVaxSVG = timeseriesContainer
+  .append("g")
+  .attr("transform", "translate(" + timeSeriesMargin.left + "," + (timeSeriesMargin.top + timeSeriesHeight / 3 * 2) + ")");
 
 const covidCasesPath = covidCasesSVG.append("path")
-
 const covidDeathsPath = covidDeathsSVG.append("path")
+const covidVaxPath = covidVaxSVG.append("path")
 
-const timeseriesAnnotations = covidDeathsSVG
+const casesAnnotations = covidCasesSVG
   .append("g")
-  .attr("class", "annotation-group")
+  .style("font-size", "14px")
+const deathsAnnotations = covidDeathsSVG
+  .append("g")
+  .style("font-size", "14px")
+const vaxAnnotations = covidVaxSVG
+  .append("g")
+  .style("font-size", "14px")
 
 const timeseriesTooltipGroup = covidCasesSVG
   .append("g")
@@ -39,13 +49,19 @@ timeseriesTooltipGroup
   .append("circle")
   .attr("id", "covid-cases-circle")
   .attr("r", 3)
-  .attr("stroke", "steelblue")
+  .attr("stroke", "orange")
 
 timeseriesTooltipGroup
   .append("circle")
   .attr("id", "covid-deaths-circle")
   .attr("r", 3)
   .attr("stroke", "red")
+
+timeseriesTooltipGroup
+  .append("circle")
+  .attr("id", "covid-vax-circle")
+  .attr("r", 3)
+  .attr("stroke", "steelblue")
 
 const dateText = timeseriesTooltipGroup
   .append("text")
@@ -56,6 +72,9 @@ const covidCasesText = timeseriesTooltipGroup
 const covidDeathsText = timeseriesTooltipGroup
   .append("text")
   .attr("dy", "2em")
+const covidVaxText = timeseriesTooltipGroup
+  .append("text")
+  .attr("dy", "3em")
 
 timeseriesContainer
   .on("mouseover", function(mouse) {
@@ -70,8 +89,9 @@ timeseriesContainer
 
 // set the ranges
 const x = d3.scaleTime().range([0, timeSeriesWidth]);
-const y = d3.scaleLinear().range([timeSeriesHeight / 2, 0]);
-const y2 = d3.scaleLinear().range([timeSeriesHeight / 2, 0]);
+const y = d3.scaleLinear().range([timeSeriesHeight / 3, 0])
+const y2 = d3.scaleLinear().range([timeSeriesHeight / 3, 0])
+const y3 = d3.scaleLinear().range([timeSeriesHeight / 3, 0])
 
 let minDate = null
 let maxDate = null
@@ -79,6 +99,7 @@ let currentMaxDate = null
 
 let covidCasesData = null
 let covidDeathsData = null
+let covidVaxData = null
 let stateCasesData = null
 let stateDeathsData = null
 
@@ -104,6 +125,7 @@ timeseriesContainer
 
     const cases = covidCasesData.find(d => d.date === current_date).covid_cases;
     const deaths = covidDeathsData.find(d => d.date === current_date).covid_deaths;
+    const vaxes = covidVaxData.find(d => d.date === current_date).cum_one_vax_dose;
     timeseriesTooltipGroup.attr('transform', `translate(${x(current_date)},${0})`);
     dateText
       .text(`week ending: ${current_date.toLocaleDateString('en-US')}`)
@@ -114,108 +136,112 @@ timeseriesContainer
     covidDeathsText
       .text(`new covid deaths: ${deaths}`)
       .attr("text-anchor", x_cord < timeSeriesWidth / 2 ? "start" : "end")
+    covidVaxText
+      .text(`cum. at least one vax dose: ${vaxes}`)
+      .attr("text-anchor", x_cord < timeSeriesWidth / 2 ? "start" : "end")
     timeseriesTooltipGroup.select("#covid-cases-circle").attr("cy", y(cases))
-    timeseriesTooltipGroup.select("#covid-deaths-circle").attr("cy", y2(deaths) + timeSeriesHeight / 2)
+    timeseriesTooltipGroup.select("#covid-deaths-circle").attr("cy", y2(deaths) + timeSeriesHeight / 3)
+    timeseriesTooltipGroup.select("#covid-vax-circle").attr("cy", y3(vaxes) + timeSeriesHeight / 3 * 2)
   })
   .on("mouseout", function(mouse) {
     timeseriesTooltipGroup.style("display", "none")
   })
 
 const casesValueline = d3.line()
-    .x(function(d) { return x(d.date)})
-    .y(function(d) { return y(d.covid_cases)})
+  .x(function(d) { return x(d.date)})
+  .y(function(d) { return y(d.covid_cases)})
 
 const deathsValueline = d3.line()
-    .x(function(d) { return x(d.date)})
-    .y(function(d) { return y2(d.covid_deaths)})
+  .x(function(d) { return x(d.date)})
+  .y(function(d) { return y2(d.covid_deaths)})
+
+const vaxValueline = d3.line()
+  .x(function(d) { return x(d.date)})
+  .y(function(d) { return y3(d.cum_one_vax_dose)})
 
 const parseTime = d3.timeParse("%Y-%m-%d");
 
-const annotations = [
+const slides = [
   {
-    note: {
-      label: "CDC reports first lab-confirmed covid-19 case",
-      title: "Jan 20, 2020"
+    date: parseTime("2020-04-19"),
+    annotationContainer: covidDeathsSVG,
+    accessors: {
+      x: d => x(parseTime(d.date)),
+      y: d => y2(d.covid_deaths)
     },
-    connector: {
-      end: "arrow"
-    },
-    dx: 10,
-    dy: -100,
-    data: { date: "2020-01-26", covid_cases: 0 },
+    annotation: {
+      note: {
+        label: "Initial peak in covid deaths during pandemic",
+        title: "Apr 19, 2020"
+      },
+      connector: {
+        end: "arrow"
+      },
+      dx: 10,
+      dy: -50,
+      data: { date: "2020-04-19", covid_deaths: 15307 },
+    }
   },
   {
-    note: {
-      label: "Vaccinations begin for healthcare workers and elderly in long-term care facilities",
-      title: "Dec 14, 2020"
+    date: parseTime("2021-01-17"),
+    annotationContainer: covidDeathsSVG,
+    accessors: {
+      x: d => x(parseTime(d.date)),
+      y: d => y2(d.covid_deaths)
     },
-    connector: {
-      end: "arrow"
-    },
-    dx: -20,
-    dy: -100,
-    data: { date: "2020-12-20", covid_cases: 0 },
+    annotation: {
+      note: {
+        label: "New peak in covid deaths as vaccinations start in Dec 2020",
+        title: "Jan 17, 2021"
+      },
+      connector: {
+        end: "arrow"
+      },
+      dx: 10,
+      dy: -50,
+      data: { date: "2021-01-17", covid_deaths: 23321 },
+    }
   },
   {
-    note: {
-      label: "Teachers, school staff, and child care workers eligible for vaccines",
-      title: "Mar 2, 2021"
+    date: parseTime("2022-01-16"),
+    annotationContainer: covidCasesSVG,
+    accessors: {
+      x: d => x(parseTime(d.date)),
+      y: d => y(d.covid_cases)
     },
-    connector: {
-      end: "arrow"
-    },
-    dx: -150,
-    dy: -250,
-    data: { date: "2021-03-07", covid_cases: 0 },
+    annotation: {
+      note: {
+        label: "Covid cases surge but deaths are not similarly surging as more are vaccinated",
+        title: "Jan 16, 2022"
+      },
+      connector: {
+        end: "arrow"
+      },
+      dx: 10,
+      dy: 100,
+      data: { date: "2022-01-16", covid_cases: 5641443 },
+    }
   },
   {
-    note: {
-      label: "All people age 16 and older eligible for vaccines",
-      title: "Apr 19, 2021"
+    date: parseTime("2023-03-12"),
+    annotationContainer: covidDeathsSVG,
+    accessors: {
+      x: d => x(parseTime(d.date)),
+      y: d => y2(d.covid_deaths)
     },
-    connector: {
-      end: "arrow"
-    },
-    dx: -1,
-    dy: -130,
-    data: { date: "2021-04-25", covid_cases: 0 },
-  },
-  {
-    note: {
-      label: "FDA authorizes vaccines for children ages 12 and older",
-      title: "May 10, 2021"
-    },
-    connector: {
-      end: "arrow"
-    },
-    dx: -25,
-    dy: -275,
-    data: { date: "2021-05-16", covid_cases: 0 }
-  },
-  {
-    note: {
-      label: "FDA authorizes vaccines for children ages 5 and older",
-      title: "Oct 29, 2021"
-    },
-    connector: {
-      end: "arrow"
-    },
-    dx: -25,
-    dy: -150,
-    data: { date: "2021-10-31", covid_cases: 0 },
-  },
-  {
-    note: {
-      label: "FDA authorizes vaccines for children 6 months and older",
-      title: "Jun 17, 2022"
-    },
-    connector: {
-      end: "arrow"
-    },
-    dx: -50,
-    dy: -150,
-    data: { date: "2022-06-19", covid_cases: 0 },
-  },
+    annotation: {
+      note: {
+        label: "Covid cases and deaths remain stable",
+        title: "Mar 12, 2023"
+      },
+      connector: {
+        end: "arrow"
+      },
+      dx: -50,
+      dy: -100,
+      data: { date: "2023-03-12", covid_deaths: 1702 },
+    }
+  }
 ]
 
 // Fetch map and covid weekly data
@@ -228,6 +254,7 @@ const setupTimeSeriesChartPromise = getDataPromise.then(function(data) {
       d.date = parseTime(d.date)
       d.covid_cases = +d.covid_cases
       d.covid_deaths = +d.covid_deaths
+      d.cum_one_vax_dose = +d.cum_one_vax_dose
   })
 
   covidCasesData = d3.rollup(
@@ -242,11 +269,20 @@ const setupTimeSeriesChartPromise = getDataPromise.then(function(data) {
     function(d) { return d.date }
   )
 
+  covidVaxData = d3.rollup(
+    data,
+    function(v) { return d3.sum(v, function(d) { return d.cum_one_vax_dose })},
+    function(d) { return d.date }
+  )
+
   covidCasesData = Array.from(covidCasesData, function(item) {
     return {date: item[0], covid_cases: item[1]}
   })
   covidDeathsData = Array.from(covidDeathsData, function(item) {
     return {date: item[0], covid_deaths: item[1]}
+  })
+  covidVaxData = Array.from(covidVaxData, function(item) {
+    return {date: item[0], cum_one_vax_dose: item[1]}
   })
   const extent = d3.extent(data, d=>d.date)
   minDate = extent[0]
@@ -255,10 +291,11 @@ const setupTimeSeriesChartPromise = getDataPromise.then(function(data) {
   x.domain(d3.extent(covidDeathsData, function(d) { return d.date; }))
   y.domain([0, d3.max(covidCasesData, function(d) { return d.covid_cases; })])
   y2.domain([0, d3.max(covidDeathsData, function(d) { return d.covid_deaths; }) * 2])
+  y3.domain([0, d3.max(covidVaxData, function(d) { return d.cum_one_vax_dose; })])
 
-  covidDeathsSVG
+  covidVaxSVG
     .append("g")
-    .attr("transform", "translate(0," + timeSeriesHeight / 2 + ")")
+    .attr("transform", "translate(0," + timeSeriesHeight / 3 + ")")
     .call(d3.axisBottom(x))
     .append("text")
     .attr("fill", "black")
@@ -280,13 +317,23 @@ const setupTimeSeriesChartPromise = getDataPromise.then(function(data) {
     .call(d3.axisLeft(y2))
     .append("text")
     .attr("fill", "black")
-    .text("new covid deahts")
+    .text("new covid deaths")
+    .style("font-size", "15px")
+    .attr("transform", "translate(-70, 30) rotate(-90)")
+
+  covidVaxSVG
+    .append("g")
+    .call(d3.axisLeft(y3))
+    .append("text")
+    .attr("fill", "black")
+    .text("cum. at least one vax dose")
     .style("font-size", "15px")
     .attr("transform", "translate(-70, 30) rotate(-90)")
 
   return {
     covidCasesData: covidCasesData,
     covidDeathsData: covidDeathsData,
+    covidVaxData: covidVaxData,
     rawData: data
   }
 });
@@ -385,21 +432,21 @@ const setupMapsPromise = getMapJSONPromise
     return states
   })
 
-function changeSlide(maxDate) {
+function changeSlide(slideNumber) {
   Promise.all([setupTimeSeriesChartPromise, setupMapsPromise])
   .then((values) => {
     const data = values[0]
     const statesMap = values[1]
-    currentMaxDate = new Date(maxDate)
+    currentMaxDate = slides[slideNumber].date
     const filteredCasesData = data.covidCasesData.filter(function(x) {return x.date <= currentMaxDate})
     const filteredDeathData = data.covidDeathsData.filter(function(x) {return x.date <= currentMaxDate})
+    const filteredVaxData = data.covidVaxData.filter(function(x) {return x.date <= currentMaxDate})
     const filteredRawData = data.rawData.filter((x) => x.date <= currentMaxDate)
-    const filteredAnnotations = annotations.filter(function(x) {return new Date(x.data.date) <= currentMaxDate})
 
     covidCasesPath
       .data([filteredCasesData])
       .attr("fill", "none")
-      .attr("stroke", "steelblue")
+      .attr("stroke", "orange")
       .attr("d", casesValueline);
 
     covidDeathsPath
@@ -408,16 +455,23 @@ function changeSlide(maxDate) {
       .attr("stroke", "red")
       .attr("d", deathsValueline);
 
-    const makeAnnotations = d3.annotation()
-      // .notePadding(15)
-      // .type(d3.annotationCalloutCircle)
-      .accessors({
-        x: d => x(parseTime(d.date)),
-        y: d => y(d.covid_cases)
-      })
-      .annotations(filteredAnnotations)
+    covidVaxPath
+      .data([filteredVaxData])
+      .attr("fill", "none")
+      .attr("stroke", "steelblue")
+      .attr("d", vaxValueline);
 
-    timeseriesAnnotations.call(makeAnnotations)
+    d3.selectAll(".annotation-group").remove()
+    slides[slideNumber].annotationContainer
+      .append("g")
+      .attr("class", "annotation-group")
+      .call(
+        d3.annotation()
+          .accessors(slides[slideNumber].accessors)
+          .annotations([
+            slides[slideNumber].annotation
+          ])
+      )
 
     stateCasesData = d3.rollup(
       filteredRawData,
@@ -453,5 +507,4 @@ function changeSlide(maxDate) {
   })
 }
 
-changeSlide("2020-12-31")
-
+changeSlide(0)

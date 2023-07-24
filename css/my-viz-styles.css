@@ -1,0 +1,14 @@
+#slide-controller ul {
+    list-style-type: none;
+}
+
+#slide-controller li {
+    display: inline-block;
+    padding: 5px;
+}
+
+#timeseries-chart-title {
+    width: 1200px;
+    text-align: center;
+    font-weight: bold;
+}
