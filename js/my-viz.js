@@ -1,23 +1,22 @@
-// set the dimensions and margins of the graph
-var margin = {top: 20, right: 20, bottom: 70, left: 100},
-    width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+const timeSeriesMargin = {top: 20, right: 20, bottom: 70, left: 100}
+const timeSeriesWidth = 960 - timeSeriesMargin.left - timeSeriesMargin.right
+const timeSeriesHeight = 500 - timeSeriesMargin.top - timeSeriesMargin.bottom
 
 const timeseriesContainer = d3
   .select("#timeseries")
   .append("svg")
-  .attr("width", width + margin.left + margin.right)
-  .attr("height", height + margin.top + margin.bottom)
+  .attr("width", timeSeriesWidth + timeSeriesMargin.left + timeSeriesMargin.right)
+  .attr("height", timeSeriesHeight + timeSeriesMargin.top + timeSeriesMargin.bottom)
 
-const timeseriesSVG = timeseriesContainer
+const covidCasesSVG = timeseriesContainer
   .append("g")
-  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  .attr("transform", "translate(" + timeSeriesMargin.left + "," + timeSeriesMargin.top + ")");
 
 const covidDeathsSVG = timeseriesContainer
   .append("g")
-  .attr("transform", "translate(" + margin.left + "," + (margin.top + height / 2) + ")");
+  .attr("transform", "translate(" + timeSeriesMargin.left + "," + (timeSeriesMargin.top + timeSeriesHeight / 2) + ")");
 
-const timeseriesPath = timeseriesSVG.append("path")
+const covidCasesPath = covidCasesSVG.append("path")
 
 const covidDeathsPath = covidDeathsSVG.append("path")
 
@@ -25,58 +24,57 @@ const timeseriesAnnotations = covidDeathsSVG
   .append("g")
   .attr("class", "annotation-group")
 
-const mouseG = timeseriesSVG
-  .append('g')
-  .classed('mouse', true)
-  .style('display', 'none')
+const timeseriesTooltipGroup = covidCasesSVG
+  .append("g")
+  .style("display", "none")
 
-mouseG
-  .append('rect')
-  .attr('width', 2)
-  .attr('x',-1)
-  .attr('height', height)
-  .attr('fill', 'lightgray');
+timeseriesTooltipGroup
+  .append("rect")
+  .attr("width", 2)
+  .attr("x", -1)
+  .attr("height", timeSeriesHeight)
+  .attr("fill", "lightgray");
 
-mouseG
-  .append('circle')
-  .attr('id', "covid-cases-circle")
-  .attr('r', 3)
+timeseriesTooltipGroup
+  .append("circle")
+  .attr("id", "covid-cases-circle")
+  .attr("r", 3)
   .attr("stroke", "steelblue")
 
-mouseG
-  .append('circle')
-  .attr('id', "covid-deaths-circle")
-  .attr('r', 3)
-  .attr("stroke", "steelblue")
+timeseriesTooltipGroup
+  .append("circle")
+  .attr("id", "covid-deaths-circle")
+  .attr("r", 3)
+  .attr("stroke", "red")
 
-const dateText = mouseG
-  .append('text')
-  .attr('dy', '0em')
-const covidCasesText = mouseG
-  .append('text')
-  .attr('dy', '1em')
-const covidDeathsText = mouseG
-  .append('text')
-  .attr('dy', '2em')
+const dateText = timeseriesTooltipGroup
+  .append("text")
+  .attr("dy", "0em")
+const covidCasesText = timeseriesTooltipGroup
+  .append("text")
+  .attr("dy", "1em")
+const covidDeathsText = timeseriesTooltipGroup
+  .append("text")
+  .attr("dy", "2em")
 
 timeseriesContainer
   .on("mouseover", function(mouse) {
     const [x_cord, y_cord] = d3.pointer(mouse)
-    if (x_cord < 100) {
+    if (x_cord < timeSeriesMargin.left) {
       return
     }
 
-    mouseG.style('display', 'block')
+    timeseriesTooltipGroup.style('display', 'block')
   })
 
 
 // set the ranges
-var x = d3.scaleTime().range([0, width]);
-var y = d3.scaleLinear().range([height / 2, 0]);
-var y2 = d3.scaleLinear().range([height / 2, 0]);
+const x = d3.scaleTime().range([0, timeSeriesWidth]);
+const y = d3.scaleLinear().range([timeSeriesHeight / 2, 0]);
+const y2 = d3.scaleLinear().range([timeSeriesHeight / 2, 0]);
 
-var minDate = null
-var maxDate = null
+let minDate = null
+let maxDate = null
 let currentMaxDate = null
 
 let covidCasesData = null
@@ -87,7 +85,7 @@ let stateDeathsData = null
 timeseriesContainer
   .on("mousemove", function(mouse) {
     const [x_cord, y_cord] = d3.pointer(mouse);
-    if (x_cord < 100) {
+    if (x_cord < timeSeriesMargin.left) {
       return
     }
 
@@ -98,43 +96,40 @@ timeseriesContainer
     const current_date = covidCasesData[bisect.left(covidCasesData, x.invert(x_cord - 100))].date
 
     if (current_date > currentMaxDate) {
-      mouseG.style('display', 'none')
+      timeseriesTooltipGroup.style('display', 'none')
       return
     } else {
-      mouseG.style('display', 'block')
+      timeseriesTooltipGroup.style('display', 'block')
     }
 
-    // const current_date = minDate + Math.round(ratio * (maxDate - minDate));
-    const cnt = covidCasesData.find(d => d.date === current_date).covid_cases;
+    const cases = covidCasesData.find(d => d.date === current_date).covid_cases;
     const deaths = covidDeathsData.find(d => d.date === current_date).covid_deaths;
-    mouseG.attr('transform', `translate(${x(current_date)},${0})`);
+    timeseriesTooltipGroup.attr('transform', `translate(${x(current_date)},${0})`);
     dateText
       .text(`week ending: ${current_date.toLocaleDateString('en-US')}`)
-      .attr('text-anchor', x_cord < width / 2 ? "start" : "end")
+      .attr("text-anchor", x_cord < timeSeriesWidth / 2 ? "start" : "end")
     covidCasesText
-      .text(`new covid cases: ${cnt}`)
-      .attr('text-anchor', x_cord < width / 2 ? "start" : "end")
+      .text(`new covid cases: ${cases}`)
+      .attr("text-anchor", x_cord < timeSeriesWidth / 2 ? "start" : "end")
     covidDeathsText
       .text(`new covid deaths: ${deaths}`)
-      .attr('text-anchor', x_cord < width / 2 ? "start" : "end")
-    mouseG.select('#covid-cases-circle').attr('cy', y(cnt));
-    mouseG.select('#covid-deaths-circle').attr('cy', y2(deaths) + 410 / 2);
+      .attr("text-anchor", x_cord < timeSeriesWidth / 2 ? "start" : "end")
+    timeseriesTooltipGroup.select("#covid-cases-circle").attr("cy", y(cases))
+    timeseriesTooltipGroup.select("#covid-deaths-circle").attr("cy", y2(deaths) + timeSeriesHeight / 2)
   })
   .on("mouseout", function(mouse) {
-    mouseG.style('display', 'none');
+    timeseriesTooltipGroup.style("display", "none")
   })
 
-// define the line
-var casesValueline = d3.line()
-    .x(function(d) { return x(d.date); })
-    .y(function(d) { return y(d.covid_cases); });
+const casesValueline = d3.line()
+    .x(function(d) { return x(d.date)})
+    .y(function(d) { return y(d.covid_cases)})
 
-var deathsValueline = d3.line()
-    .x(function(d) { return x(d.date); })
-    .y(function(d) { return y2(d.covid_deaths); });
+const deathsValueline = d3.line()
+    .x(function(d) { return x(d.date)})
+    .y(function(d) { return y2(d.covid_deaths)})
 
-// parse the date / time
-var parseTime = d3.timeParse("%Y-%m-%d");
+const parseTime = d3.timeParse("%Y-%m-%d");
 
 const annotations = [
   {
@@ -195,11 +190,7 @@ const annotations = [
     },
     dx: -25,
     dy: -275,
-    // dx: ,
-    // dx: -142,
-    // subject: { y:"bottom" },
-    data: { date: "2021-05-16", covid_cases: 0 },
-    // className: "show-bg"
+    data: { date: "2021-05-16", covid_cases: 0 }
   },
   {
     note: {
@@ -227,10 +218,11 @@ const annotations = [
   },
 ]
 
+// Fetch map and covid weekly data
 const getMapJSONPromise = d3.json("d3/states-10m.json")
 const getDataPromise = d3.csv("data/covid_weekly_data.csv")
 
-// Get the data
+// Setup the timeseries chart
 const setupTimeSeriesChartPromise = getDataPromise.then(function(data) {
   data.forEach(function(d) {
       d.date = parseTime(d.date)
@@ -264,19 +256,17 @@ const setupTimeSeriesChartPromise = getDataPromise.then(function(data) {
   y.domain([0, d3.max(covidCasesData, function(d) { return d.covid_cases; })])
   y2.domain([0, d3.max(covidDeathsData, function(d) { return d.covid_deaths; }) * 2])
 
-  // Add the X Axis
   covidDeathsSVG
     .append("g")
-    .attr("transform", "translate(0," + height / 2 + ")")
+    .attr("transform", "translate(0," + timeSeriesHeight / 2 + ")")
     .call(d3.axisBottom(x))
     .append("text")
     .attr("fill", "black")
     .text("week")
     .style("font-size", "15px")
-    .attr("transform", "translate(" + width / 2 + "," + 35 + ")")
+    .attr("transform", "translate(" + timeSeriesWidth / 2 + "," + 35 + ")")
 
-  // Add the Y Axis
-  timeseriesSVG
+  covidCasesSVG
     .append("g")
     .call(d3.axisLeft(y))
     .append("text")
@@ -406,7 +396,7 @@ function changeSlide(maxDate) {
     const filteredRawData = data.rawData.filter((x) => x.date <= currentMaxDate)
     const filteredAnnotations = annotations.filter(function(x) {return new Date(x.data.date) <= currentMaxDate})
 
-    timeseriesPath
+    covidCasesPath
       .data([filteredCasesData])
       .attr("fill", "none")
       .attr("stroke", "steelblue")
