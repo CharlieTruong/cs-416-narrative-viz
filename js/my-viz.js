@@ -245,7 +245,7 @@ const slides = [
 ]
 
 // Fetch map and covid weekly data
-const getMapJSONPromise = d3.json("d3/states-10m.json")
+const getMapJSONPromise = d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json")
 const getDataPromise = d3.csv("data/covid_weekly_data.csv")
 
 // Setup the timeseries chart
