@@ -43,3 +43,7 @@
 #deaths-map {
     display: none;
 }
+
+#deaths-map path {
+    cursor: pointer;
+}
