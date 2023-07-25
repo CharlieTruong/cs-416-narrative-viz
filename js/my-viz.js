@@ -1,6 +1,6 @@
 const timeSeriesMargin = {top: 20, right: 20, bottom: 70, left: 100}
 const timeSeriesWidth = 800 - timeSeriesMargin.left - timeSeriesMargin.right
-const timeSeriesHeight = 750 - timeSeriesMargin.top - timeSeriesMargin.bottom
+const timeSeriesHeight = 600 - timeSeriesMargin.top - timeSeriesMargin.bottom
 
 const timeseriesContainer = d3
   .select("#timeseries")
@@ -331,7 +331,7 @@ const setupTimeSeriesChartPromise = getDataPromise.then(function(data) {
     .attr("fill", "black")
     .text("cum. at least one vax dose")
     .style("font-size", "15px")
-    .attr("transform", "translate(-70, 30) rotate(-90)")
+    .attr("transform", "translate(-70, 0) rotate(-90)")
 
   return {
     covidCasesData: covidCasesData,
@@ -349,7 +349,7 @@ let mapMargin = {
   right: 10,
 };
 let mapWidth = 800 - mapMargin.left - mapMargin.right;
-let mapHeight = 600 - mapMargin.top - mapMargin.bottom;
+let mapHeight = 400 - mapMargin.top - mapMargin.bottom;
 
 const deathsSVG = d3
   .select("#deaths-map")
