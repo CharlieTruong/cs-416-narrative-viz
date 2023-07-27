@@ -62,6 +62,6 @@ The final scene will also display a map of the U.S. showing total covid deaths b
 
 ### Triggers
 
-The triggers are scene numbers that govern the specific scene or part of the timeline to display. The scene numbers are displayed in order from "1" to "4", intending for the user to click them in order. The active scene has more opacity than the inactive scenes.
+The main trigger is a "Next" button that governs the specific scene or part of the timeline to display. When the user clicks the button, the next scene is rendered up to the fourth scene. The "Next" button is disabled on the final scene.
 
 In the final scene, a map of the U.S. is displayed. The title of the map clarifies for the user that clicking on a state will filter the data to the specific state. Additionally, on hover, the cursor is changed to a pointer to indicate a state can be clicked. Lastly, if the data is filtered by state, then a "Reset State Filter" button is displayed to allow the user to remove the filter.
