@@ -4,11 +4,13 @@
 
 #slide-controller #scene-button {
     padding: 10px;
+    cursor: pointer;
 }
 
 #remove-state-filter {
     display: none;
     padding: 5px;
+    cursor: pointer;
 }
 
 #scene-label div {

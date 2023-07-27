@@ -399,6 +399,8 @@ const setupMapsPromise = getMapJSONPromise
       .on("mouseleave", function(e, d) {
         mapTooltip
           .style("opacity", 0)
+          .style("left", "0px")
+          .style("top", "0px");
       })
       .on("click", function(e, d) {
         changeSlide(d.name)
