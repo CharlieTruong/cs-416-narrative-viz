@@ -420,7 +420,10 @@ function changeSlide(state) {
   }
 
   if (slideNumber >= (slides.length - 1)) {
-    d3.select("#scene-button").text("End").attr("disabled", true)
+    d3.select("#scene-button")
+      .text("End")
+      .attr("disabled", true)
+      .style("cursor", "not-allowed")
   }
   console.log(slideNumber)
 
