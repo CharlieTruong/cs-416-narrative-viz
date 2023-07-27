@@ -401,15 +401,27 @@ const setupMapsPromise = getMapJSONPromise
           .style("opacity", 0)
       })
       .on("click", function(e, d) {
-        changeSlide(3, d.name)
+        changeSlide(d.name)
       })
 
     return states
   })
 
-function changeSlide(slideNumber, state) {
-  d3.selectAll(".scene-button").style("opacity", "0.25")
-  d3.select(`.scene-button:nth-child(${slideNumber + 1})`).style("opacity", "1")
+let slideNumber = null
+
+function changeSlide(state) {
+  if (slideNumber == null) {
+    slideNumber = 0
+  } else if (slideNumber < (slides.length - 1)) {
+    slideNumber++
+    d3.select("#scene-number").text(slideNumber + 1)
+  }
+
+  if (slideNumber >= (slides.length - 1)) {
+    d3.select("#scene-button").text("End").attr("disabled", true)
+  }
+  console.log(slideNumber)
+
   Promise.all([setupTimeSeriesChartPromise, setupMapsPromise])
   .then((values) => {
     const data = values[0]
@@ -527,4 +539,4 @@ function changeSlide(slideNumber, state) {
   })
 }
 
-changeSlide(0)
+changeSlide()

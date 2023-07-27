@@ -10,21 +10,21 @@
         <div>Data Source: <a href="https://coronavirus.jhu.edu/" target="_blank">John Hopkins</a></div>
         <div id="map-tooltip"></div>
         <div id="slide-controller">
-            <h4>Scenes</h4>
-            <ul>
-                <li class="scene-button"><a href="#" onclick="changeSlide(0)">1</a></li>
-                <li class="scene-button"><a href="#" onclick="changeSlide(1)">2</a></li>
-                <li class="scene-button"><a href="#" onclick="changeSlide(2)">3</a></li>
-                <li class="scene-button"><a href="#" onclick="changeSlide(3)">4</a></li>
-                <li id="remove-state-filter"><a href="#" onclick="changeSlide(3)">Remove State Filter</a></li>
-            </ul>
+            <div id="scene-label">
+                <div id="scene-label-prefix">Scene</div>
+                <div id="scene-number">1</div>
+            </div>
+            <button id="scene-button" onclick="changeSlide()">Next</button>
         </div>
         <div id="charts">
             <div id="timeseries">
                 <div id="timeseries-chart-title">New Cases, New Deaths, and Cum. Vaccinations by Week</div>
             </div>
             <div id="deaths-map">
-                <div id="deaths-map-title">Total Deaths by State (click to filter time series by state)</div>
+                <div id="deaths-map-title">
+                    <div>Total Deaths by State (click to filter time series by state)</div>
+                    <button id="remove-state-filter" onclick="changeSlide()">Remove State Filter</button>
+                </div>
             </div>
         </div>
         <script src="https://d3js.org/d3.v7.min.js" charset="utf-8"></script>
